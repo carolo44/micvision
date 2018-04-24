@@ -267,6 +267,19 @@ void MicvisionExploration::receiveExplorationGoal(
           }
         }
         
+        goal_pixel = world2pixel(goal_point_);
+
+        if ( goal_pixel(0) <= 0 )
+          goal_pixel(0) = 1;
+        if ( goal_pixel(1) <= 0 )
+          goal_pixel(1) = 1;
+        if ( goal_pixel(0) >= current_map_.getWidth() )
+          goal_pixel(0) = current_map_.getWidth() - 1;
+        if ( goal_pixel(1) >= current_map_.getHeight() )
+          goal_pixel(1) = current_map_.getHeight() - 1;
+    
+        goal_point_ = pixel2world(goal_pixel);       
+
         move_base_msgs::MoveBaseActionGoal move_base_action_goal;
         move_base_action_goal.header.stamp  = ros::Time::now();
         move_base_action_goal.goal_id.stamp.sec = 0;
@@ -279,6 +292,7 @@ void MicvisionExploration::receiveExplorationGoal(
         posestamped_goal.pose.position.y = goal_point_(1);
         posestamped_goal.pose.orientation = tf::createQuaternionMsgFromYaw(0);
         move_base_action_goal.goal.target_pose = posestamped_goal;
+        ROS_INFO_STREAM("real x_pixel " << goal_pixel(0) << "real y_pixel " << goal_pixel(1) << " map width " << current_map_.getWidth() << " map height " << current_map_.getHeight());
         if ( !is_stopped_ )
           goal_publisher_.publish(move_base_action_goal/*posestamped_goal*/);
       }
@@ -541,9 +555,11 @@ void MicvisionExploration::searchDeeper() {
       step++;
       oldIndex = curr_index;
       current_map_.getCoordinates(curr_pixel, oldIndex);
-      current_map_.getIndex(curr_pixel(0) + step_length * std::cos(direction),
+      if ( !current_map_.getIndex(curr_pixel(0) + step_length * std::cos(direction),
                             curr_pixel(1) + step_length * std::sin(direction),
-                            curr_index);
+                            curr_index) ) {
+        break;
+      }
     }
     int curr_distance = (curr_pixel(0) - start_pixel(0)) * (curr_pixel(0) - start_pixel(0))
                          + (curr_pixel(1) - start_pixel(1)) * (curr_pixel(1) - start_pixel(1));
