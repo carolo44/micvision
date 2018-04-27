@@ -603,7 +603,7 @@ void MicvisionLocation::tracking() {
         num = 0;
 
       if ( num > 10 ) {
-        scoreLaserScanSamples();
+        //scoreLaserScanSamples();
         num = 0;
       }
     }
